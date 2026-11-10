@@ -1,3 +1,5 @@
+import random
+
 from pico2d import load_image, get_canvas_width
 
 import game_framework
@@ -29,15 +31,21 @@ BIRD_H = int(BIRD_W * FRAME_H / FRAME_W)            # 원본 비율 유지 -> 45
 class Bird:
     image = None
 
-    def __init__(self, x=800, y=400):
+    def __init__(self):
         if Bird.image is None:
             Bird.image = load_image('bird_animation.png')
-        self.x, self.y = x, y
-        self.frame = 0
-        self.dir = 1
+        # 새떼가 한 몸처럼 움직이지 않도록 개체마다 값을 다르게 줌
+        self.x = random.randint(BIRD_W, get_canvas_width() - BIRD_W)
+        self.y = random.randint(300, 550)                  # 하늘 영역
+        self.dir = random.choice([-1, 1])
+        self.frame = random.uniform(0, FRAME_COUNT)         # 날갯짓 위상
+        self.speed = FLY_SPEED_PPS * random.uniform(0.85, 1.15)
+        # 빠른 새는 날갯짓도 빠르게: 속도 비율만큼 초당 프레임 수를 맞춤
+        self.frames_per_second = (FRAMES_PER_ACTION * ACTION_PER_TIME
+                                  * self.speed / FLY_SPEED_PPS)
 
     def update(self):
-        self.x += self.dir * FLY_SPEED_PPS * game_framework.frame_time
+        self.x += self.dir * self.speed * game_framework.frame_time
 
         # 화면 끝에 닿으면 방향 반전 (몸 절반만큼 안쪽에서 반전해 화면 밖으로 안 나감)
         left_limit = BIRD_W // 2
@@ -48,8 +56,8 @@ class Bird:
         elif self.x < left_limit:
             self.x = left_limit
             self.dir = 1
-        # 초당 FRAMES_PER_ACTION * ACTION_PER_TIME (=28) 프레임 진행, frame_time 으로 FPS 독립
-        self.frame = (self.frame + FRAMES_PER_ACTION * ACTION_PER_TIME
+        # 기준 초당 FRAMES_PER_ACTION * ACTION_PER_TIME (=28) 프레임, frame_time 으로 FPS 독립
+        self.frame = (self.frame + self.frames_per_second
                       * game_framework.frame_time) % FRAME_COUNT
 
     def draw(self):
