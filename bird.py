@@ -1,10 +1,17 @@
 from pico2d import load_image
 
+import game_framework
+
 # bird_animation.png : 918 x 506, 5열 x 3행 격자, 총 14 프레임 (마지막 행은 4개)
 SHEET_W, SHEET_H = 918, 506
 FRAME_COLS = 5
 FRAME_W, FRAME_H = 183, 168          # 918 / 5, 506 / 3
 FRAME_COUNT = 14
+
+# Bird Action Speed (날갯짓)
+TIME_PER_ACTION = 0.5                       # 날갯짓 1회에 걸리는 시간(초)
+ACTION_PER_TIME = 1.0 / TIME_PER_ACTION     # 초당 날갯짓 횟수 = 2회
+FRAMES_PER_ACTION = FRAME_COUNT             # 날갯짓 1회 = 시트의 14 프레임
 
 
 class Bird:
@@ -17,7 +24,9 @@ class Bird:
         self.frame = 0
 
     def update(self):
-        self.frame = (self.frame + 1) % FRAME_COUNT
+        # 초당 FRAMES_PER_ACTION * ACTION_PER_TIME (=28) 프레임 진행, frame_time 으로 FPS 독립
+        self.frame = (self.frame + FRAMES_PER_ACTION * ACTION_PER_TIME
+                      * game_framework.frame_time) % FRAME_COUNT
 
     def draw(self):
         f = int(self.frame)
