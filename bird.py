@@ -1,4 +1,4 @@
-from pico2d import load_image
+from pico2d import load_image, get_canvas_width
 
 import game_framework
 
@@ -38,6 +38,16 @@ class Bird:
 
     def update(self):
         self.x += self.dir * FLY_SPEED_PPS * game_framework.frame_time
+
+        # 화면 끝에 닿으면 방향 반전 (몸 절반만큼 안쪽에서 반전해 화면 밖으로 안 나감)
+        left_limit = BIRD_W // 2
+        right_limit = get_canvas_width() - BIRD_W // 2
+        if self.x > right_limit:
+            self.x = right_limit
+            self.dir = -1
+        elif self.x < left_limit:
+            self.x = left_limit
+            self.dir = 1
         # 초당 FRAMES_PER_ACTION * ACTION_PER_TIME (=28) 프레임 진행, frame_time 으로 FPS 독립
         self.frame = (self.frame + FRAMES_PER_ACTION * ACTION_PER_TIME
                       * game_framework.frame_time) % FRAME_COUNT
@@ -48,5 +58,9 @@ class Bird:
         # pico2d 는 좌하단 원점 -> 시트 위쪽 행일수록 bottom 이 커진다
         left = col * FRAME_W
         bottom = SHEET_H - (row + 1) * FRAME_H
-        Bird.image.clip_draw(left, bottom, FRAME_W, FRAME_H,
-                             self.x, self.y, BIRD_W, BIRD_H)
+        if self.dir == 1:   # 원본 그림은 오른쪽을 바라봄
+            Bird.image.clip_draw(left, bottom, FRAME_W, FRAME_H,
+                                 self.x, self.y, BIRD_W, BIRD_H)
+        else:               # 왼쪽으로 날 때는 좌우 반전
+            Bird.image.clip_composite_draw(left, bottom, FRAME_W, FRAME_H,
+                                           0, 'h', self.x, self.y, BIRD_W, BIRD_H)
